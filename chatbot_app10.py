@@ -3,6 +3,7 @@ import time
 import re
 import os
 import requests
+os.environ["BACKEND_URL"] = "https://translation-api-lo00.onrender.com"
 
 # 🔗 رابط الـ backend (تحليل الترجمة)
 BACKEND_URL = os.getenv("BACKEND_URL")
