@@ -20,7 +20,10 @@ def analyze_translation(english, arabic):
             timeout=120,
         )
         resp.raise_for_status()
-        return resp.json().get("analysis", "[No analysis returned]")
+        data = resp.json()
+reasoning = data.get("reasoning", "❌ لا يوجد تحليل.")
+precise = data.get("precise_translation", "—")
+return f"**سبب الخطأ:** {reasoning}\n\n**الترجمة الدقيقة المقترحة:**\n{precise}"
     except Exception as e:
         return f"❌ Error contacting backend: {e}"
 
