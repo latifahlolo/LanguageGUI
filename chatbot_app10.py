@@ -3,31 +3,31 @@ import time
 import re
 import os
 import requests
-os.environ["BACKEND_URL"] = "https://translation-api-lo00.onrender.com"
 
-# 🔗 رابط الـ backend (تحليل الترجمة)
+# رابط API التحليل (FastAPI على Render)
+os.environ["BACKEND_URL"] = "https://translation-api-lo00.onrender.com"
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-# تحليل الترجمة (الاتصال مع backend API)
+# دالة الاتصال مع API وتحليل الترجمة
 @st.cache_data(show_spinner=False)
 def analyze_translation(english, arabic):
     if not BACKEND_URL:
-        return "❌ BACKEND_URL not set. Please set it using 'export BACKEND_URL=...'"
+        return "❌ BACKEND_URL not set."
     try:
         resp = requests.post(
             f"{BACKEND_URL.rstrip('/')}/analyze",
             json={"english": english, "arabic": arabic},
-            timeout=120,
+            timeout=10
         )
         resp.raise_for_status()
         data = resp.json()
-reasoning = data.get("reasoning", "❌ لا يوجد تحليل.")
-precise = data.get("precise_translation", "—")
-return f"**سبب الخطأ:** {reasoning}\n\n**الترجمة الدقيقة المقترحة:**\n{precise}"
+        reasoning = data.get("reasoning", "❌ لا يوجد تحليل.")
+        precise = data.get("precise_translation", "—")
+        return f"**📝 سبب الخطأ:** {reasoning}\n\n**✅ الترجمة الدقيقة المقترحة:**\n{precise}"
     except Exception as e:
         return f"❌ Error contacting backend: {e}"
 
-# اكتشاف اللغة المدخلة
+# كشف اللغة
 def detect_language(text):
     english_pattern = re.compile(r'^[A-Za-z0-9\s.,?!\'\";:-]+$')
     arabic_pattern = re.compile(r'^[\u0600-\u06FF\s0-9.,؟!،؛:]+$')
@@ -37,10 +37,9 @@ def detect_language(text):
         return "ar"
     return None
 
-# واجهة المستخدم
+# واجهة Streamlit
 st.title("💬 Translation Chatbot")
 
-# حالة الجلسة
 if "step" not in st.session_state:
     st.session_state.step = 1
     st.session_state.english_sentence = ""
@@ -54,16 +53,16 @@ def add_message(role, content):
     with st.chat_message(role):
         st.markdown(content)
 
-# الرسائل السابقة
 if not st.session_state.messages:
     add_message("assistant", "👋 Hello! I’m your translation assistant.")
     add_message("assistant", "Please type the English sentence you'd like to translate.")
 
+# عرض الرسائل السابقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# إدخال المستخدم
+# صندوق إدخال المستخدم
 prompt = st.chat_input("Type your message here...")
 
 if prompt:
@@ -97,3 +96,4 @@ if prompt:
             st.session_state.messages.append({"role": "assistant", "content": analysis})
             add_message("assistant", "Would you like to try another sentence? Type it in English to continue.")
             st.session_state.step = 1
+
