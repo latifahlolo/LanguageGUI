@@ -5,7 +5,7 @@ import os
 import requests
 
 # رابط API التحليل (FastAPI على Render)
-os.environ["BACKEND_URL"] = "https://translation-api-lo00.onrender.com"
+os.environ["BACKEND_URL"] = "https://127cc37aae9e.ngrok-free.app"
 BACKEND_URL = os.getenv("BACKEND_URL")
 
 # دالة الاتصال مع API وتحليل الترجمة
