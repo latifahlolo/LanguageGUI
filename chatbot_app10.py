@@ -5,7 +5,7 @@ import os
 import requests
 
 # ✅ ngrok رابط الـ backend الجديد (الموديل شغال عليه)
-os.environ["BACKEND_URL"] = "https://f4b152d28832.ngrok-free.app"
+os.environ["BACKEND_URL"] = "https://61d55d4e78fa.ngrok-free.app"
 BACKEND_URL = os.getenv("BACKEND_URL")
 
 @st.cache_data(show_spinner=False)
