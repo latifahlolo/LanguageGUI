@@ -4,11 +4,10 @@ import re
 import os
 import requests
 
-# رابط API التحليل (FastAPI على Render)
+# ✅ ngrok رابط الـ backend الجديد (الموديل شغال عليه)
 os.environ["BACKEND_URL"] = "https://f4b152d28832.ngrok-free.app"
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-# دالة الاتصال مع API وتحليل الترجمة
 @st.cache_data(show_spinner=False)
 def analyze_translation(english, arabic):
     if not BACKEND_URL:
@@ -17,17 +16,14 @@ def analyze_translation(english, arabic):
         resp = requests.post(
             f"{BACKEND_URL.rstrip('/')}/analyze",
             json={"english": english, "arabic": arabic},
-            timeout=10
+            timeout=30
         )
         resp.raise_for_status()
         data = resp.json()
-        reasoning = data.get("reasoning", "❌ لا يوجد تحليل.")
-        precise = data.get("precise_translation", "—")
-        return f"**📝 سبب الخطأ:** {reasoning}\n\n**✅ الترجمة الدقيقة المقترحة:**\n{precise}"
+        return data.get("analysis", "❌ لا يوجد تحليل.")
     except Exception as e:
         return f"❌ Error contacting backend: {e}"
 
-# كشف اللغة
 def detect_language(text):
     english_pattern = re.compile(r'^[A-Za-z0-9\s.,?!\'\";:-]+$')
     arabic_pattern = re.compile(r'^[\u0600-\u06FF\s0-9.,؟!،؛:]+$')
@@ -37,7 +33,8 @@ def detect_language(text):
         return "ar"
     return None
 
-# واجهة Streamlit
+# ========== واجهة المستخدم ========== #
+st.set_page_config(page_title="Translation Analyzer", layout="centered")
 st.title("💬 Translation Chatbot")
 
 if "step" not in st.session_state:
@@ -54,15 +51,13 @@ def add_message(role, content):
         st.markdown(content)
 
 if not st.session_state.messages:
-    add_message("assistant", "👋 Hello! I’m your translation assistant.")
-    add_message("assistant", "Please type the English sentence you'd like to translate.")
+    add_message("assistant", "👋 Welcome! I’ll help you analyze English ↔ Arabic translations.")
+    add_message("assistant", "Please enter a sentence in **English** to begin.")
 
-# عرض الرسائل السابقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# صندوق إدخال المستخدم
 prompt = st.chat_input("Type your message here...")
 
 if prompt:
@@ -70,30 +65,24 @@ if prompt:
 
     if st.session_state.step == 1:
         if detect_language(prompt) != "en":
-            add_message("assistant", "⚠️ Please enter the sentence in **English** using only English letters.")
+            add_message("assistant", "⚠️ Please enter the sentence in **English**.")
         else:
             st.session_state.english_sentence = prompt
-            with st.chat_message("assistant"):
-                with st.spinner("Assistant is typing..."):
-                    time.sleep(1)
-                    reply = "Great! Now, please provide the Arabic translation."
-                    st.markdown(reply)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
+            reply = "✅ Got it! Now, enter your Arabic translation of the sentence."
+            add_message("assistant", reply)
             st.session_state.step = 2
 
     elif st.session_state.step == 2:
         if detect_language(prompt) != "ar":
-            add_message("assistant", "⚠️ Please enter the translation in **Arabic** using only Arabic letters.")
+            add_message("assistant", "⚠️ Please enter the translation in **Arabic**.")
         else:
             st.session_state.arabic_translation = prompt
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing your translation..."):
-                    analysis = analyze_translation(
+                    result = analyze_translation(
                         st.session_state.english_sentence,
                         st.session_state.arabic_translation
                     )
-                    st.markdown(analysis)
-            st.session_state.messages.append({"role": "assistant", "content": analysis})
-            add_message("assistant", "Would you like to try another sentence? Type it in English to continue.")
+                    st.markdown(result)
+            add_message("assistant", "Would you like to try another sentence? Type it in English to start over.")
             st.session_state.step = 1
-
